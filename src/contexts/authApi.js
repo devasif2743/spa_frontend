@@ -3,15 +3,14 @@ import axios from "axios";
 // http://192.168.29.83:8000/api/web-login
 const api=axios.create({
    //  baseURL:'http://192.168.29.83:8000/api',
-    baseURL:'https://demoapi.spasoftware.online/public/api',
-    // baseURL:'http://127.0.0.1:8000/api',
+    // baseURL:'https://demoapi.spasoftware.online/public/api',
+    baseURL:'http://127.0.0.1:8002/api',
     // baseURL:'https://api.nearbydoctors.in/public/api',
      headers: {
         //  "Content-Type": "application/json",
    
         },
 })
-
 
 api.interceptors.request.use(
   (config) => {
@@ -24,9 +23,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-
-
-
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -36,7 +32,6 @@ api.interceptors.response.use(
       localStorage.removeItem("access_token");
       localStorage.removeItem("user_details");
 
-    
       window.location.href = "/";
 
     }
@@ -45,15 +40,10 @@ api.interceptors.response.use(
   }
 );
 
-
-
-
 export const loginWeb= async (payload)=>{
      const response= await api.post('web-login',payload);
      return response;
 }
-
-
 
 export const fetchProducts = async (page = 1, perPage = 6, search = "") => {
   try {
@@ -94,15 +84,12 @@ export const addBilling = async (formData) => {
   return res.data;
 };
 
-
 export const advBilling = async (formData) => {
   const res = await api.post("/admin/adv-billing", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
 };
-
-
 
 export const todayBilling = async (formData) => {
   const res = await api.post("/admin/today-billing", formData, {
@@ -111,7 +98,6 @@ export const todayBilling = async (formData) => {
   return res.data;
 };
 
-
 // export const advBilling = async (formData) => {
 //   const res = await api.post("/admin/adv-billing", formData, {
 //     headers: { "Content-Type": "multipart/form-data" },
@@ -119,11 +105,7 @@ export const todayBilling = async (formData) => {
 //   return res.data;
 // };
 
-
 // membershiphistory
-
-
-
 
 export const membershiphistory = async (phone) => {
   const res = await api.get(
@@ -132,7 +114,6 @@ export const membershiphistory = async (phone) => {
   );
   return res.data;   // returns {status, memberships, ...}
 };
-
 
 export const membershiphistoryAll = async () => {
   const res = await api.get(
@@ -175,7 +156,6 @@ export const fetchBrands = async () => {
   return res.data;
 };
 
-
 export const fetchReports = async (days = 30, branchId = null) => {
   const params = { days };
   if (branchId && branchId !== "all") params.branch_id = branchId;
@@ -184,7 +164,6 @@ export const fetchReports = async (days = 30, branchId = null) => {
 };
 
 // ✅ Flexible version: can pass days OR start/end dates
-
 
 // authApi.js
 export const fetchbranchReports = async (startDate, endDate, branchId = null) => {
@@ -199,16 +178,10 @@ export const fetchbranchReports = async (startDate, endDate, branchId = null) =>
   return res.data;
 };
 
-
-
 export const fetchBranchesadmin = async () => {
   const res = await api.get("admin/branchess");
   return res.data;
 };
-
-
-
-
 
 export const fetchAppointmentsFull = async (branchId = "all") => {
   const { data } = await api.get(`/appointments-full`, {
@@ -220,14 +193,6 @@ export const fetchAppointmentsFull = async (branchId = "all") => {
     cart: typeof a.cart === "string" ? JSON.parse(a.cart) : a.cart
   }));
 };
-
-
-
-
-
-
-
-
 
 // Categories
 export const fetchCategories = async () => {
@@ -249,9 +214,6 @@ export const deleteCategory = async (id) => {
   const res = await api.delete(`/admin/delete-category/${id}`);
   return res.data;
 };
-
-
-
 
 export const fetchBranches = async (page = 1, perPage = 10, search = "") => {
   try {
@@ -288,7 +250,6 @@ export const fetchBranches = async (page = 1, perPage = 10, search = "") => {
   }
 };
 
-
 export const addBranch = async (payload) => {
   const res = await api.post("/admin/add-branch", payload);
   return res.data;
@@ -310,16 +271,12 @@ export const fetchStaffStats = async (branchId = "all") => {
   return res.data; // backend returns the staff list with status, revenue, etc.
 };
 
-
-
 export const addbrand= async (payload)=>{
      const response= await api.post('admin/add-brand',payload);
      return response;
 }
 
-
 // Staff Start herw
-
 
 export const fetchStaff = async (page = 1, perPage = 10, search = "") => {
   try {
@@ -433,14 +390,10 @@ export const fetchStaffadmin = async (
   }
 };
 
-
-
 export const addStaff = async (payload) => {
   const res = await api.post("/admin/add-staff", payload);
   return res.data;
 };
-
-
 
 export async function staff() {
   const res = await api.get("/admin/staff");
@@ -481,19 +434,15 @@ export const add_staff_branch = async (payload) => {
   return res.data;
 };
 
-
 export const updateStaff = async (id, payload) => {
   const res = await api.post(`/admin/update-staff/${id}`, payload);
   return res.data;
 };
 
-
-
 export const deleteStaff = async (id) => {
   const res = await api.delete(`/admin/delete-staff/${id}`);
   return res.data;
 };
-
 
 // membership
  
@@ -542,7 +491,6 @@ export const fetchMemberships = async (page = 1, perPage = 10, search = "") => {
   }
 };
 
-
 export const addMembership = async (payload) => {
   const res = await api.post("/admin/add-membership", payload);
   return res.data;
@@ -558,44 +506,6 @@ export const deleteMembership = async (id) => {
   return res.data;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /////////////// Old Code
 
 export const addCategorys= async (payload)=>{
@@ -608,18 +518,15 @@ export const listCategories = async (id) => {
   return response;
 };
 
-
 export const updateCategorys = async (id, payload) => {
   const response = await api.put(`admin/update-category/${id}`, payload);
   return response.data;
 };
 
-
 export const deleteCategorys = async (id) => {
   const response = await api.delete(`admin/delete-category/${id}`);
   return response;
 };
-
 
 export const addNewGame= async (payload)=>{
      const response= await api.post('admin/add-game',payload);
@@ -632,13 +539,10 @@ export const listGames = async (id) => {
   return response;
 };
 
-
-
 export const updategames = async (id, payload) => {
   const response = await api.put(`admin/update-game/${id}`, payload);
   return response.data;
 };
-
 
 export const deletegames = async (id) => {
   const response = await api.delete(`admin/delete-game/${id}`);
@@ -657,19 +561,15 @@ export const listProducts = async (id) => {
   return response;
 };
 
-
-
 export const updateProducts = async (id, payload) => {
   const response = await api.put(`admin/update-product/${id}`, payload);
   return response.data;
 };
 
-
 export const deleteProducts = async (id) => {
   const response = await api.delete(`admin/delete-product/${id}`);
   return response;
 };
-
 
 export const dashboardList = async (id) => {
   const endpoint = id ? `admin/dashboard/${id}` : 'admin/dashboard';
@@ -677,18 +577,13 @@ export const dashboardList = async (id) => {
   return response;
 };
 
-
 // dashboard
 // order
-
-
 
 export const addNewOrder= async (payload)=>{
      const response= await api.post('admin/add-order',payload);
      return response;
 }
-
-
 
 export const orderList = async (id) => {
   const endpoint = id ? `admin/list-orders/${id}` : 'admin/list-orders';
@@ -701,33 +596,15 @@ export const updateOrderNewStatus = async (id, payload) => {
   return response.data;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export const customer_store= async (payload)=>{
      const response= await api.post('admin/add-customer',payload);
      return response;
 }
 
-
-
 export const list_customers= async ()=>{
      const response= await api.get('admin/list-customer');
      return response;
 }
-
-
 
 export const list_project_by_customer_id=async(id)=>{
     const response= await api.get(`admin/list-project-by-customer-id/${id}`);
@@ -745,7 +622,6 @@ export const list_customer= async (id)=>{
 } 
 
 export function customer_update(payload) {
-
 
    return api.put(`admin/customer-update/${payload.id}`, payload);
 }
@@ -769,7 +645,6 @@ export function update_stage(payload) {
    return api.put(`admin/projects-domain-update/${payload.id}`, payload);
 }
 
-
 export function update_hosting_stage(payload) {
    return api.put(`admin/projects-hosting-update/${payload.id}`, payload);
 }
@@ -786,11 +661,9 @@ export function update_balance_stage(payload) {
    return api.put(`admin/projects-balance-update/${payload.id}`, payload);
 }
 
-
 export function update_stage_update(payload) {
    return api.put(`admin/projects-stage-update/${payload.id}`, payload);
 }
-
 
 export function update_document(payload) {
    return api.post(`admin/project-document`, payload);
@@ -809,7 +682,6 @@ export const get_all_salesTeam= async (id)=>{
 export function update_project(formData) {
    return api.post(`admin/project-update`, formData);
 }
-
 
 export function create_staff(payload){
    return api.post('admin/create-staff',payload);
@@ -847,7 +719,6 @@ export function create_invoice(payload){
    return api.post('admin/create-invoice',payload);
 }
 
-
 export function list_invoice(){
    return api.get('admin/list-invoice');
 }
@@ -856,11 +727,9 @@ export function list_invoice_id(id){
    return api.get(`admin/list-invoice/${id}`);
 }
 
-
 export function list_invoice_ids(id){
    return api.get(`admin/list-invoices/${id}`);
 }
-
 
 export function create_payment(formData) {
 
@@ -874,7 +743,6 @@ export function create_payment(formData) {
 export function invoices_update(id,payload){
    return api.put(`admin/invoices-update/${id}`,payload);
 }
-
 
 export function create_expanses(payload){
    return api.post('admin/create-expanses',payload);
@@ -896,9 +764,6 @@ export function project_status_update(payload){
    return api.post('admin/project-status-update',payload);
 }
 
-
-
-
 export function update_expense(id, payload) {
   return api.post(`admin/update-expanses/${id}`, payload);
 }
@@ -907,15 +772,7 @@ export function delete_expanses(id) {
   return api.delete(`admin/delete-expanses/${id}`);
 }
 
-
-
 //delete-expanses
-
-
-
-
-
-
 
 // below for chat integration
 export function Incomingmessages(){
@@ -925,20 +782,14 @@ export function Incomingmessages(){
 export const getMessagesBetweenUsers = (userId) =>
   api.get(`admin/messages?user_id=${userId}`);
 
-
 export function sentMessage(payload){
    return api.post('admin/messages',payload);
 }
-
-
 
 //Incomingmessages
 //   api.get('/messages').then(res => setMessages(res.data));
 
 //project-status-update
-
-
-
 
 //list-expanses
 
@@ -955,16 +806,9 @@ export function sentMessage(payload){
 //update_project
 // rojects-stage-update
 
-
-
-
-
     // Route::put('/projects-hosting-update/{id}',      [ProjectController::class, 'updateHosting']);
     // Route::put('/projects-design-update/{id}',      [ProjectController::class, 'updateDesign']);
     // Route::put('/projects-live-update/{id}',      [ProjectController::class, 'updateMadeLive']);
     // Route::put('/projects-balance-update/{id}',      [ProjectController::class, 'updateBalanceAsked']);
-
-
-
 
 export default api;

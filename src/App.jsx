@@ -29,6 +29,7 @@ import StaffStatsBranch from './pages/StaffStatsBranch';
 import AppointmentsFull from './pages/AppointmentsFull';
 import MembershipPurchase from './pages/MembershipPurchase';
 import MembershipDetails from './pages/MembershipDetails';
+import Calender from './pages/Calender';
 
 function App() {
   return (
@@ -61,6 +62,7 @@ const MainContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/RazorpayPayment" element={<RazorpayPayment />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/calender" element={<Calender />} />
 
         {/* Admin Routes */}
         <Route
@@ -106,6 +108,7 @@ const MainContent = () => {
                 <Route path="therapist-availability" element={<StaffStatsBranch />} />
                 <Route path="billing" element={<POS />} />
                 <Route path="purchase" element={<MembershipPurchase />} />
+          
                 {/* <Route path="membership-details" element={<MembershipDetails />} /> */}
                 {/* <Route path="book-appointment" element={<POS_ADV/>} /> */}
                 {user && (
