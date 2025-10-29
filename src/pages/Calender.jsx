@@ -1,17 +1,12 @@
-import React, { useState, useMemo } from 'react';
-
-// Cleaned & fixed Pos With Calendar component
-// - Fixed unterminated JSX issue (paddingTop stray quote)
-// - Billing includes customer name & phone
-// - Phone lookup (mock DB) auto-sets membership (silver/hour-wise, gold/discount)
-
-const SERVICES = [
-  { id: 1, title: 'Spearmint oil therapy', duration: 120, price: 5499 },
-  { id: 2, title: 'Melting candle therapy', duration: 60, price: 3499 },
-  { id: 3, title: 'Chocolate massage', duration: 90, price: 4499 },
-  { id: 4, title: 'Deep cleaning facial', duration: 45, price: 2499 }
-];
-const THERAPISTS = ['Anita', 'Ravi', 'Sana', 'Imran'];
+import React, { useState, useMemo, useEffect } from 'react';
+import {listProducts,liststaff } from '../contexts/authApi'
+// const SERVICES = [
+//   { id: 1, title: 'Spearmint oil therapy', duration: 120, price: 5499 },
+//   { id: 2, title: 'Melting candle therapy', duration: 60, price: 3499 },
+//   { id: 3, title: 'Chocolate massage', duration: 90, price: 4499 },
+//   { id: 4, title: 'Deep cleaning facial', duration: 45, price: 2499 }
+// ];
+// const THERAPISTS = ['Anita', 'Ravi', 'Sana', 'Imran'];
 
 const MEMBER_DB = {
   '9876543210': { level: 'silver', name: 'Priya Sharma' },
@@ -37,10 +32,20 @@ function nextAvailableStartsFor(bookings,duration,count=3,step=STEP){ const arr=
 function generateGrid(year,month){ const first=new Date(year,month,1); const sd=first.getDay(); const start=new Date(year,month,1-sd); const arr=[]; for(let i=0;i<35;i++){ const d=new Date(start); d.setDate(start.getDate()+i); arr.push(d); } return arr; }
 
 export default function Calender(){
+
+
+
   const [step,setStep]=useState(1);
   const [selectedDate,setSelectedDate]=useState(new Date());
   const [viewMonth,setViewMonth]=useState(new Date().getMonth());
   const [viewYear,setViewYear]=useState(new Date().getFullYear());
+
+  const formatDate = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const [bookings,setBookings]=useState([
     {therapist:'Ravi',date:new Date().toDateString(),start:14*60+30,end:15*60+30,title:'Walk-in'},
@@ -49,6 +54,8 @@ export default function Calender(){
     {therapist:'Sana',date:new Date(new Date().setDate(new Date().getDate()+1)).toDateString(),start:11*60,end:12*60,title:'Tomorrow booking'}
   ]);
 
+  const [SERVICES,setServices]=useState([]);
+  const [therapists,setTherapists]=useState([]);
   const [selectedServices,setSelectedServices]=useState([]);
   const [selectedTherapist,setSelectedTherapist]=useState(null);
   const [selectedStart,setSelectedStart]=useState(null);
@@ -88,19 +95,67 @@ export default function Calender(){
   const gstAmount = useGST ? (afterDiscount * (Number(gstPercent)||0) / 100) : 0;
   const finalTotal = afterDiscount + gstAmount;
 
+
+    const products=async()=>{
+    const prod=await listProducts();
+    console.log("products",prod.data.data.data)
+    setServices(prod.data.data.data)
+    
+  }
+
+  const toMin = (dt) => {
+  const d = new Date(dt);          // adjust if server sends UTC strings
+  return d.getHours() * 60 + d.getMinutes();
+};
+
+const adaptTherapistRow = (row) => ({
+  id: row.therapist.id,
+  name: row.therapist.name,
+  dayStart: toMin(row.working.start),
+  dayEnd: toMin(row.working.end),
+  booked: (row.booked || []).map(b => ({
+    title: (b.chip?.split(' • ')[0]) || 'Service',
+    start: toMin(b.start),
+    end: toMin(b.end),
+  })),
+});
+
+const loadTherapists = async () => {
+  const dateToSend = selectedDate.toISOString().slice(0, 10);
+  const res = await liststaff(dateToSend);
+
+  console.log("API raw:", res);
+
+  const rows = Array.isArray(res) ? res : res || [];
+
+  const adapted = rows.map(row => ({
+    id: row.therapist.id,
+    name: row.therapist.name,
+    dayStart: toMin(row.working.start),
+    dayEnd: toMin(row.working.end),
+    booked: (row.booked || []).map(b => ({
+      title: (b.chip?.split(' • ')[0]) || 'Service',
+      start: toMin(b.start),
+      end: toMin(b.end),
+    })),
+  }));
+
+  setTherapists(adapted);
+};
+
+
+
+  useEffect(()=>{
+      products()
+  },[])
+
+
+
+
   return (
     <div style={{minHeight:'100vh',padding:24,background:'linear-gradient(135deg,#E6FFFA,#FFEFF5)'}}>
       <div style={{maxWidth:980,margin:'0 auto',background:'rgba(255,255,255,0.6)',backdropFilter:'blur(6px)',borderRadius:20,padding:20}}>
-        <header style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
-            <div style={{width:56,height:56,borderRadius:28,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,background:'linear-gradient(90deg,#0EA5A4,#F43F5E)'}}>SPA</div>
-            <div>
-              <div style={{fontSize:20,fontWeight:800,color:'#065F46'}}>Aura Spa — POS</div>
-              <div style={{fontSize:12,color:'#065F46'}}>Smooth bookings • Relaxing experience</div>
-            </div>
-          </div>
-          <div style={{color:'#065F46'}}>Step {step} of 4</div>
-        </header>
+        
 
         <main style={{display:'grid',gap:20}}>
           {/* Step 1: Date */}
@@ -131,33 +186,69 @@ export default function Calender(){
 
           {/* Step 2: Services */}
           {step===2 && (
-            <section style={{background:'#fff',padding:16,borderRadius:12}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-                <div style={{fontWeight:700,color:'#065F46'}}>Choose Services</div>
-                <div style={{fontSize:12,color:'#065F46'}}>Select one or more treatments</div>
+            <section className="bg-white p-4 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-bold text-emerald-800">Choose Services</div>
+                <div className="text-xs text-emerald-800 opacity-80">Select one or more treatments</div>
               </div>
 
-              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
-                {SERVICES.map(s=>{ const isSel=selectedServices.some(x=>x.id===s.id); return (
-                  <div key={s.id} style={{padding:12,borderRadius:12,display:'flex',justifyContent:'space-between',alignItems:'center',background:isSel?'#FFF1F2':'#fff',border:'1px solid #ECFDF5'}}>
-                    <div>
-                      <div style={{fontWeight:700,color:'#065F46'}}>{s.title}</div>
-                      <div style={{fontSize:12,color:'#065F46'}}>{s.duration} min</div>
+              {/* 3 COL LAYOUT HERE */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {SERVICES.map(s => {
+                  const isSel = selectedServices.some(x => x.id === s.id);
+                  return (
+                    <div
+                      key={s.id}
+                      className={`p-3 rounded-xl flex justify-between items-center border transition
+                        ${isSel ? "bg-rose-50 border-rose-200" : "bg-white border-emerald-100"}`}
+                    >
+                      <div>
+                        <div className="font-semibold text-emerald-800">{s.name}</div>
+                        <div className="text-xs text-emerald-700">{s.duration} min</div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="font-bold text-rose-500">{fmtINR(s.price)}</div>
+                        <button
+                          onClick={() => toggleService(s)}
+                          className={`mt-2 px-3 py-1.5 text-sm font-semibold rounded-lg transition
+                            ${isSel
+                              ? "bg-rose-500 text-white"
+                              : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                            }`}
+                        >
+                          {isSel ? "Selected" : "Select"}
+                        </button>
+                      </div>
                     </div>
-                    <div style={{textAlign:'right'}}>
-                      <div style={{fontWeight:700,color:'#F43F5E'}}>{fmtINR(s.price)}</div>
-                      <button onClick={()=>toggleService(s)} style={{marginTop:8,padding:'6px 10px',borderRadius:8,background:isSel?'#F43F5E':'#ECFDF5',color:isSel?'#fff':'#065F46',fontWeight:700}}>{isSel?'Selected':'Select'}</button>
-                    </div>
-                  </div>
-                );})}
+                  );
+                })}
               </div>
 
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}}>
-                <button onClick={()=>setStep(1)} style={{padding:'8px 12px',borderRadius:8,border:'1px solid #ECFDF5'}}>Back</button>
-                <button onClick={()=>setStep(3)} disabled={selectedServices.length===0} style={{padding:'10px 16px',borderRadius:8,background:'linear-gradient(90deg,#0EA5A4,#F43F5E)',color:'#fff',fontWeight:700}}>Next: Therapists</button>
+              <div className="flex justify-between items-center mt-4">
+                <button
+                  onClick={() => setStep(1)}
+                  className="px-3.5 py-2 rounded-lg border border-emerald-100 text-emerald-800"
+                >
+                  Back
+                </button>
+
+                  <button
+                    onClick={() => {
+                      loadTherapists();     // ✅ call API here
+                      setStep(3);           // then go to Step 3
+                    }}
+                    disabled={selectedServices.length === 0}
+                    className="px-4 py-2 rounded-lg font-semibold text-white disabled:opacity-50
+                      bg-gradient-to-r from-teal-500 to-rose-500"
+                  >
+                    Next: Therapists
+                  </button>
+
               </div>
             </section>
-          )}
+            )}
+
 
           {/* Step 3: Therapists */}
           {step===3 && (
@@ -167,37 +258,78 @@ export default function Calender(){
                 <div style={{fontSize:12,color:'#065F46'}}>Based on total duration {totalDuration()} min</div>
               </div>
 
-              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
-                {THERAPISTS.map(t=>{ const bookingsFor=bookingsForTherapistOnDate(t); const stepToUse=membership==='silver'?60:STEP; const earliest=findNextAvailableStart(bookingsFor,DAY_START,effectiveDuration(),stepToUse); const suggestions=nextAvailableStartsFor(bookingsFor,effectiveDuration(),3,stepToUse); return (
-                  <div key={t} style={{padding:12,borderRadius:12,border:'1px solid #ECFDF5'}}>
-                    <div style={{display:'flex',justifyContent:'space-between'}}>
-                      <div>
-                        <div style={{fontWeight:700,color:'#065F46'}}>{t}</div>
-                        <div style={{fontSize:12,color:'#065F46'}}>Working: {minsToTime(DAY_START)} - {minsToTime(DAY_END)}</div>
+                <p style={{marginBottom:8,color:'#065F46',fontSize:12}}> {selectedDate.toDateString()}</p>
 
-                        <div style={{marginTop:8,fontSize:13}}>
-                          <div style={{fontWeight:700,color:'#F43F5E'}}>Booked</div>
-                          {bookingsFor.length===0 && <div style={{fontSize:12,color:'#9CA3AF'}}>No bookings</div>}
-                          {bookingsFor.map((b,idx)=> <div key={idx} style={{display:'inline-block',marginTop:6,marginRight:6,background:'#FFF1F2',color:'#B91C1C',padding:'6px 8px',borderRadius:999,fontSize:12}}>{b.title} • {minsToTime(b.start)} - {minsToTime(b.end)}</div>)}
-                        </div>
-                      </div>
+           <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
+  {therapists.map(t => {
+    const bookingsFor = t.booked ?? [];
+    const stepToUse = membership === 'silver' ? 60 : STEP;
 
-                      <div style={{textAlign:'right'}}>
-                        <div style={{fontSize:13}}>{earliest? <span style={{fontWeight:700,color:'#065F46'}}>Next: {minsToTime(earliest)}</span> : <span style={{color:'#DC2626'}}>No slot</span>}</div>
-                        <button onClick={()=>chooseTherapist(t)} style={{marginTop:8,padding:'8px 10px',borderRadius:8,background:'linear-gradient(90deg,#0EA5A4,#F43F5E)',color:'#fff',fontWeight:700}}>Choose</button>
-                      </div>
-                    </div>
+    // use therapist’s working window from API
+    const earliest = findNextAvailableStart(
+      bookingsFor, t.dayStart, effectiveDuration(), stepToUse
+    );
+    const suggestions = nextAvailableStartsFor(
+      bookingsFor, effectiveDuration(), 3, stepToUse
+    );
 
-                    <div style={{marginTop:10}}>
-                      <div style={{fontSize:12,color:'#065F46',marginBottom:6}}>Suggested starts</div>
-                      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                        {suggestions.length===0 && <div style={{fontSize:12,color:'#9CA3AF'}}>No available starts</div>}
-                        {suggestions.map(st=> <button key={st} onClick={()=>pickSuggestedStart(t,st)} style={{padding:'6px 10px',borderRadius:999,background:'#ECFDF5',border:'1px solid #D1FAE5'}}>{minsToTime(st)}</button>)}
-                      </div>
-                    </div>
-                  </div>
-                );})}
-              </div>
+    return (
+      <div key={t.id} style={{padding:12,borderRadius:12,border:'1px solid #ECFDF5'}}>
+        <div style={{display:'flex',justifyContent:'space-between'}}>
+          <div>
+            <div style={{fontWeight:700,color:'#065F46'}}>{t.name}</div>
+            <div style={{fontSize:12,color:'#065F46'}}>
+              Working: {minsToTime(t.dayStart)} - {minsToTime(t.dayEnd)}
+            </div>
+
+            <div style={{marginTop:8,fontSize:13}}>
+              <div style={{fontWeight:700,color:'#F43F5E'}}>Booked</div>
+              {bookingsFor.length === 0 && (
+                <div style={{fontSize:12,color:'#9CA3AF'}}>No bookings</div>
+              )}
+              {bookingsFor.map((b, idx) => (
+                <div key={idx}
+                  style={{display:'inline-block',marginTop:6,marginRight:6,background:'#FFF1F2',color:'#B91C1C',padding:'6px 8px',borderRadius:999,fontSize:12}}>
+                  {b.title} • {minsToTime(b.start)} - {minsToTime(b.end)}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:13}}>
+              {earliest !== null
+                ? <span style={{fontWeight:700,color:'#065F46'}}>Next: {minsToTime(earliest)}</span>
+                : <span style={{color:'#DC2626'}}>No slot</span>}
+            </div>
+            <button
+              onClick={() => chooseTherapist(t.name)}
+              style={{marginTop:8,padding:'8px 10px',borderRadius:8,background:'linear-gradient(90deg,#0EA5A4,#F43F5E)',color:'#fff',fontWeight:700}}>
+              Choose
+            </button>
+          </div>
+        </div>
+
+        <div style={{marginTop:10}}>
+          <div style={{fontSize:12,color:'#065F46',marginBottom:6}}>Suggested starts</div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            {suggestions.length === 0 && (
+              <div style={{fontSize:12,color:'#9CA3AF'}}>No available starts</div>
+            )}
+            {suggestions.map(st => (
+              <button key={st}
+                onClick={() => pickSuggestedStart(t.name, st)}
+                style={{padding:'6px 10px',borderRadius:999,background:'#ECFDF5',border:'1px solid #D1FAE5'}}>
+                {minsToTime(st)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  })}
+</div>
+
 
               <div style={{display:'flex',justifyContent:'space-between',marginTop:12}}>
                 <button onClick={()=>setStep(2)} style={{padding:'8px 12px',borderRadius:8,border:'1px solid #ECFDF5'}}>Back</button>

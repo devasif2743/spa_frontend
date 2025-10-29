@@ -4,7 +4,7 @@ import axios from "axios";
 const api=axios.create({
    //  baseURL:'http://192.168.29.83:8000/api',
     // baseURL:'https://demoapi.spasoftware.online/public/api',
-    baseURL:'http://127.0.0.1:8002/api',
+    baseURL:'http://127.0.0.1:8000/api',
     // baseURL:'https://api.nearbydoctors.in/public/api',
      headers: {
         //  "Content-Type": "application/json",
@@ -123,6 +123,8 @@ export const membershiphistoryAll = async () => {
   return res.data;   // returns {status, memberships, ...}
 };
 
+
+
 export const membershiphistorydetails = async (id) => {
   const res = await api.get(
     `/admin/member-transactions-details?membership_id=${id}`,
@@ -130,6 +132,19 @@ export const membershiphistorydetails = async (id) => {
   );
   return res.data;   // returns {status, memberships, ...}
 };
+
+
+
+
+export const liststaff = async (date) => {
+  const res = await api.get(`/admin/list-staff-data`, {
+    params: { date }, // e.g. "2025-09-28"
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.data; // { status: true, data: [...] }
+};
+
+
 
 export const addProduct = async (formData) => {
   const res = await api.post("/admin/add-product", formData, {
